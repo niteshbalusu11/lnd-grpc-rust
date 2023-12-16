@@ -247,7 +247,7 @@ pub async fn connect(
     socket: String,
 ) -> Result<LndClient, Box<dyn std::error::Error>> {
     let channel = get_channel(cert, socket).await?;
-    let interceptor = MacaroonInterceptor {macaroon};
+    let interceptor = MacaroonInterceptor { macaroon };
     let client = LndClient {
         autopilot: crate::autopilotrpc::autopilot_client::AutopilotClient::with_interceptor(
             channel.clone(),
