@@ -20,7 +20,7 @@ tonic-openssl = { version = "0.2" }
 hyper = "0.14"
 hyper-openssl = "0.9"
 prost = "0.10"
-tokio = { version = "1.35", features = ["macros"] }
+tokio = { version = "1.35", features = ["full"] }
 tokio-stream = { version = "0.1.14", features = ["net"] }
 openssl = "0.10.16"
 tower = "0.4.13"
