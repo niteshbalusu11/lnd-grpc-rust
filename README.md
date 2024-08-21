@@ -1,6 +1,6 @@
 # LND gRPC Client in Rust.
 
-Rust implementation of LND RPC client using async gRPC library `tonic_openssl`.
+Rust 🦀 implementation of LND RPC client using async gRPC library `tonic_openssl`.
 
 ## About
 
@@ -10,6 +10,11 @@ It contains vendored `*.proto` files so LND source code is not *required*
 but accepts an environment variable `LND_REPO_DIR` which overrides the vendored `*.proto` files.
 This can be used to test new features in non-released `lnd`.
 (Actually, the motivating project using this library was that case. :))
+
+## Adding to your Rust 🦀 project
+```
+cargo add lnd_grpc_rust
+```
 
 ## Usage
 
