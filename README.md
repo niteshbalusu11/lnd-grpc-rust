@@ -9,7 +9,6 @@ Apart from being up-to-date at the time of writing (:D) it also allows `async` u
 It contains vendored `*.proto` files so LND source code is not *required*
 but accepts an environment variable `LND_REPO_DIR` which overrides the vendored `*.proto` files.
 This can be used to test new features in non-released `lnd`.
-(Actually, the motivating project using this library was that case. :))
 
 ## Adding to your Rust 🦀 project
 ```
@@ -34,14 +33,12 @@ async fn main() {
         // Read the contents of the file into a vector of bytes
         let cert_bytes = fs::read("/path/to/tls.cert").expect("FailedToReadTlsCertFile");
         let mac_bytes = fs::read("path/to/macaroon").expect("FailedToReadMacaroonFile");
-    
-    
-            // Convert the bytes to a hex string
+
+       // Convert the bytes to a hex string
         let cert = buffer_as_hex(cert_bytes);
         let macaroon = buffer_as_hex(mac_bytes);
-    
         let socket = "localhost:10001".to_string();
-    
+
         let mut client = lnd_grpc_rust::connect(cert, macaroon, socket)
         .await
         .expect("failed to connect");
@@ -53,8 +50,9 @@ async fn main() {
         .await
         .expect("failed to get info");
 
-    // We only print it here, note that in real-life code you may want to call `.into_inner()` on
-    // the response to get the message.
+    // We only print it here, note that in real-life code
+    // you may want to call `.into_inner()`
+    // on the response to get the message.
     println!("{:#?}", info);
 }
 
