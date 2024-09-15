@@ -9,6 +9,7 @@ use std::{error::Error, task::Poll};
 use tonic::body::BoxBody;
 use tonic_openssl::ALPN_H2_WIRE;
 use tower::Service;
+pub use prost;
 
 pub mod autopilotrpc {
     tonic::include_proto!("autopilotrpc");
