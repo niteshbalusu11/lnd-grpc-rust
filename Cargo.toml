@@ -1,6 +1,6 @@
 [package]
 name = "lnd_grpc_rust"
-version = "2.7.0"
+version = "2.8.0"
 authors = ["Martin Habovstiak <martin.habovstiak@gmail.com>", "Jonathan Zernik <yzernik@gmail.com>", "Nitesh Balusu <niteshbalusu@icloud.com>"]
 edition = "2018"
 description = "An async library implementing LND RPC via tonic_openssl and prost"
@@ -26,6 +26,7 @@ tower = "0.5.0"
 pretty_env_logger = "0.5.0"
 hex = "0.4.3"
 prost = { version = "0.10", features = ["prost-derive"] }
+serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = "0.7"

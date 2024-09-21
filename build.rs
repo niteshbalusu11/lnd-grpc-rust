@@ -42,6 +42,8 @@ fn main() -> std::io::Result<()> {
     tonic_build::configure()
         .build_client(true)
         .build_server(false)
+        .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
         .compile(&proto_paths, &[dir])?;
+
     Ok(())
 }
