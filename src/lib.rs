@@ -67,6 +67,18 @@ pub mod wtclientrpc {
     tonic::include_proto!("wtclientrpc");
 }
 
+pub mod tapchannelrpc {
+    tonic::include_proto!("tapchannelrpc");
+}
+
+pub mod rfqrpc {
+    tonic::include_proto!("rfqrpc");
+}
+
+pub mod taprpc {
+    tonic::include_proto!("taprpc");
+}
+
 /// [`tonic::Status`] is re-exported as `LndClientError` for convenience.
 pub type LndClientError = tonic::Status;
 
@@ -130,6 +142,10 @@ pub type LndWtcClient = crate::wtclientrpc::watchtower_client_client::Watchtower
     tonic::codegen::InterceptedService<MyChannel, MacaroonInterceptor>,
 >;
 
+pub type LndTapChannelClient = crate::tapchannelrpc::taproot_asset_channels_client::TaprootAssetChannelsClient<
+    tonic::codegen::InterceptedService<MyChannel, MacaroonInterceptor>,
+>;
+
 pub struct LndClient {
     autopilot: LndAutopilotClient,
     chain: LndChainClient,
@@ -146,6 +162,7 @@ pub struct LndClient {
     wallet: LndWalletClient,
     watchtower: LndWatchtowerClient,
     wtc: LndWtcClient,
+    tapchannel: LndTapChannelClient,
 }
 
 impl LndClient {
@@ -207,6 +224,10 @@ impl LndClient {
 
     pub fn wtc(&mut self) -> &mut LndWtcClient {
         &mut self.wtc
+    }
+
+    pub fn tapchannel(&mut self) -> &mut LndTapChannelClient {
+        &mut self.tapchannel
     }
 }
 
@@ -308,6 +329,10 @@ pub async fn connect(
             interceptor.clone(),
         ),
         wtc: crate::wtclientrpc::watchtower_client_client::WatchtowerClientClient::with_interceptor(
+            channel.clone(),
+            interceptor.clone(),
+        ),
+        tapchannel: crate::tapchannelrpc::taproot_asset_channels_client::TaprootAssetChannelsClient::with_interceptor(
             channel.clone(),
             interceptor.clone(),
         ),
