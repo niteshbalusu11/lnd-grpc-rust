@@ -42,11 +42,11 @@ fn main() -> std::io::Result<()> {
         })
         .collect();
 
-    tonic_build::configure()
+    tonic_prost_build::configure()
         .build_client(true)
         .build_server(false)
         .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
-        .compile_protos(&proto_paths, &[dir])?;
+        .compile_protos(&proto_paths, &[dir.display().to_string()])?;
 
     Ok(())
 }

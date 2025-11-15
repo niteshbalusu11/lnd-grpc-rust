@@ -1,4 +1,3 @@
-use http_body_util::BodyExt;
 use hyper::{Request, Response, Uri};
 use hyper_openssl::client::legacy::HttpsConnector;
 use hyper_util::client::legacy::connect::HttpConnector;
@@ -10,7 +9,6 @@ use openssl::{
 };
 pub use prost;
 use std::{error::Error, task::Poll};
-use tonic::body::BoxBody;
 use tonic_openssl::ALPN_H2_WIRE;
 use tower::Service;
 
@@ -325,8 +323,8 @@ pub struct MyChannel {
 
 #[derive(Clone)]
 enum MyClient {
-    ClearText(Client<HttpConnector, BoxBody>),
-    Tls(Client<HttpsConnector<HttpConnector>, BoxBody>),
+    ClearText(Client<HttpConnector, tonic::body::Body>),
+    Tls(Client<HttpsConnector<HttpConnector>, tonic::body::Body>),
 }
 
 impl MyChannel {
@@ -361,9 +359,8 @@ impl MyChannel {
     }
 }
 
-impl Service<Request<BoxBody>> for MyChannel {
-    type Response =
-        Response<http_body_util::combinators::UnsyncBoxBody<bytes::Bytes, hyper::Error>>;
+impl Service<Request<tonic::body::Body>> for MyChannel {
+    type Response = Response<tonic::body::Body>;
     type Error = hyper_util::client::legacy::Error;
     type Future = std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>> + Send>,
@@ -373,7 +370,7 @@ impl Service<Request<BoxBody>> for MyChannel {
         Ok(()).into()
     }
 
-    fn call(&mut self, mut req: Request<BoxBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<tonic::body::Body>) -> Self::Future {
         let uri = Uri::builder()
             .scheme(self.uri.scheme().unwrap().clone())
             .authority(self.uri.authority().unwrap().clone())
@@ -394,8 +391,8 @@ impl Service<Request<BoxBody>> for MyChannel {
         Box::pin(async move {
             let res = fut.await?;
             let (parts, body) = res.into_parts();
-            let boxed_body = body.map_err(|e| hyper::Error::from(e)).boxed_unsync();
-            Ok(Response::from_parts(parts, boxed_body))
+            let body = tonic::body::Body::new(body);
+            Ok(Response::from_parts(parts, body))
         })
     }
 }
