@@ -2,7 +2,7 @@
 name = "lnd_grpc_rust"
 version = "2.12.0"
 authors = ["Martin Habovstiak <martin.habovstiak@gmail.com>", "Jonathan Zernik <yzernik@gmail.com>", "Nitesh Balusu <niteshbalusu@icloud.com>"]
-edition = "2018"
+edition = "2021"
 description = "An async library implementing LND RPC via tonic_openssl and prost"
 homepage = "https://github.com/niteshbalusu11/lnd-grpc-rust"
 repository = "https://github.com/niteshbalusu11/lnd-grpc-rust"
@@ -15,18 +15,23 @@ license = "MIT"
 doctest = false
 
 [dependencies]
-tonic = "0.7"
-tonic-openssl = { version = "0.2" }
-hyper = "0.14"
-hyper-openssl = "0.9"
+tonic = "0.14"
+tonic-prost = "0.14"
+tonic-openssl = { version = "0.3" }
+hyper = { version = "1.0", features = ["client", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["client", "client-legacy", "http1", "http2", "tokio"] }
+hyper-openssl = { version = "0.10", features = ["client-legacy"] }
+http-body-util = "0.1"
+bytes = "1.0"
 tokio = { version = "1.40", features = ["rt-multi-thread", "macros"] }
 tokio-stream = { version = "0.1.16", features = ["net"] }
 openssl = "0.10.66"
 tower = "0.5.0"
 pretty_env_logger = "0.5.0"
 hex = "0.4.3"
-prost = { version = "0.10", features = ["prost-derive"] }
+prost = { version = "0.14", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-tonic-build = "0.7"
+tonic-prost-build = "0.14"
+protobuf-src = "2"

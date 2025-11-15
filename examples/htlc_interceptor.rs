@@ -53,10 +53,13 @@ async fn main() {
         println!("htlc {:?}", htlc);
         let response = lnd_grpc_rust::routerrpc::ForwardHtlcInterceptResponse {
             incoming_circuit_key: htlc.incoming_circuit_key,
-            action: 0,                  // this will claim the htlc
-            preimage: preimage.clone(), // this would be for a real preimage
+            action: 0,
+            preimage: preimage.clone(),
             failure_code: 0,
             failure_message: vec![],
+            in_amount_msat: todo!(),
+            out_amount_msat: todo!(),
+            out_wire_custom_records: todo!(),
         };
         tx.send(response).await.unwrap();
     }

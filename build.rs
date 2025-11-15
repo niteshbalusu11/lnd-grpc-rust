@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
 fn main() -> std::io::Result<()> {
+    // Set up vendored protoc to avoid requiring system installation
+    std::env::set_var("PROTOC", protobuf_src::protoc());
+
     println!("cargo:rerun-if-env-changed=LND_REPO_DIR");
     let dir = match std::env::var_os("LND_REPO_DIR") {
         Some(lnd_repo_path) => {
@@ -39,11 +42,11 @@ fn main() -> std::io::Result<()> {
         })
         .collect();
 
-    tonic_build::configure()
+    tonic_prost_build::configure()
         .build_client(true)
         .build_server(false)
         .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
-        .compile(&proto_paths, &[dir])?;
+        .compile_protos(&proto_paths, &[dir.display().to_string()])?;
 
     Ok(())
 }

@@ -1,13 +1,14 @@
-use hyper::client::connect::HttpConnector;
-use hyper::{client::ResponseFuture, Body, Client, Request, Response, Uri};
-use hyper_openssl::HttpsConnector;
+use hyper::{Request, Response, Uri};
+use hyper_openssl::client::legacy::HttpsConnector;
+use hyper_util::client::legacy::connect::HttpConnector;
+use hyper_util::client::legacy::Client;
+use hyper_util::rt::TokioExecutor;
 use openssl::{
     ssl::{SslConnector, SslMethod},
     x509::X509,
 };
 pub use prost;
 use std::{error::Error, task::Poll};
-use tonic::body::BoxBody;
 use tonic_openssl::ALPN_H2_WIRE;
 use tower::Service;
 
@@ -223,8 +224,7 @@ impl tonic::service::Interceptor for MacaroonInterceptor {
     ) -> Result<tonic::Request<()>, LndClientError> {
         request.metadata_mut().insert(
             "macaroon",
-            #[allow(deprecated)]
-            tonic::metadata::MetadataValue::from_str(&self.macaroon)
+            tonic::metadata::MetadataValue::try_from(&self.macaroon)
                 .expect("hex produced non-ascii"),
         );
         Ok(request)
@@ -323,8 +323,8 @@ pub struct MyChannel {
 
 #[derive(Clone)]
 enum MyClient {
-    ClearText(Client<HttpConnector, BoxBody>),
-    Tls(Client<HttpsConnector<HttpConnector>, BoxBody>),
+    ClearText(Client<HttpConnector, tonic::body::Body>),
+    Tls(Client<HttpsConnector<HttpConnector>, tonic::body::Body>),
 }
 
 impl MyChannel {
@@ -332,7 +332,11 @@ impl MyChannel {
         let mut http = HttpConnector::new();
         http.enforce_http(false);
         let client = match certificate {
-            None => MyClient::ClearText(Client::builder().http2_only(true).build(http)),
+            None => MyClient::ClearText(
+                Client::builder(TokioExecutor::new())
+                    .http2_only(true)
+                    .build(http),
+            ),
             Some(pem) => {
                 let ca = X509::from_pem(&pem[..])?;
                 let mut connector = SslConnector::builder(SslMethod::tls())?;
@@ -343,7 +347,11 @@ impl MyChannel {
                     c.set_verify_hostname(false);
                     Ok(())
                 });
-                MyClient::Tls(Client::builder().http2_only(true).build(https))
+                MyClient::Tls(
+                    Client::builder(TokioExecutor::new())
+                        .http2_only(true)
+                        .build(https),
+                )
             }
         };
 
@@ -351,16 +359,18 @@ impl MyChannel {
     }
 }
 
-impl Service<Request<BoxBody>> for MyChannel {
-    type Response = Response<Body>;
-    type Error = hyper::Error;
-    type Future = ResponseFuture;
+impl Service<Request<tonic::body::Body>> for MyChannel {
+    type Response = Response<tonic::body::Body>;
+    type Error = hyper_util::client::legacy::Error;
+    type Future = std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>> + Send>,
+    >;
 
     fn poll_ready(&mut self, _: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         Ok(()).into()
     }
 
-    fn call(&mut self, mut req: Request<BoxBody>) -> Self::Future {
+    fn call(&mut self, mut req: Request<tonic::body::Body>) -> Self::Future {
         let uri = Uri::builder()
             .scheme(self.uri.scheme().unwrap().clone())
             .authority(self.uri.authority().unwrap().clone())
@@ -368,9 +378,21 @@ impl Service<Request<BoxBody>> for MyChannel {
             .build()
             .unwrap();
         *req.uri_mut() = uri;
-        match &self.client {
-            MyClient::ClearText(client) => client.request(req),
-            MyClient::Tls(client) => client.request(req),
-        }
+        let fut = match &self.client {
+            MyClient::ClearText(client) => {
+                let client = client.clone();
+                client.request(req)
+            }
+            MyClient::Tls(client) => {
+                let client = client.clone();
+                client.request(req)
+            }
+        };
+        Box::pin(async move {
+            let res = fut.await?;
+            let (parts, body) = res.into_parts();
+            let body = tonic::body::Body::new(body);
+            Ok(Response::from_parts(parts, body))
+        })
     }
 }
