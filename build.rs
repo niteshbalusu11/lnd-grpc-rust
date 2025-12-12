@@ -31,6 +31,10 @@ fn main() -> std::io::Result<()> {
         "walletrpc/walletkit.proto",
         "watchtowerrpc/watchtower.proto",
         "wtclientrpc/wtclient.proto",
+        "tapchannelrpc/tapchannel.proto",
+        "taprootassets.proto",
+        "tapcommon.proto",
+        "rfqrpc/rfq.proto",
     ];
 
     let proto_paths: Vec<_> = protos
