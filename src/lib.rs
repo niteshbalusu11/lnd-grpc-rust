@@ -12,6 +12,9 @@ use std::{error::Error, task::Poll};
 use tonic_openssl::ALPN_H2_WIRE;
 use tower::Service;
 
+#[cfg(test)]
+mod tests;
+
 pub mod autopilotrpc {
     tonic::include_proto!("autopilotrpc");
 }
@@ -131,6 +134,7 @@ pub type LndWtcClient = crate::wtclientrpc::watchtower_client_client::Watchtower
     tonic::codegen::InterceptedService<MyChannel, MacaroonInterceptor>,
 >;
 
+#[derive(Clone)]
 pub struct LndClient {
     autopilot: LndAutopilotClient,
     chain: LndChainClient,
