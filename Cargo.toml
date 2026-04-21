@@ -47,4 +47,4 @@ serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 tonic-prost-build = "0.14"
-protobuf-src = "2"
+protoc-bin-vendored = "3.2.0"

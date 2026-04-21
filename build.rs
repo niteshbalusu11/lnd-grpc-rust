@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
-fn main() -> std::io::Result<()> {
-    // Set up vendored protoc to avoid requiring system installation
-    std::env::set_var("PROTOC", protobuf_src::protoc());
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Set up vendored protoc to avoid requiring system installation.
+    std::env::set_var("PROTOC", protoc_bin_vendored::protoc_bin_path()?);
 
     println!("cargo:rerun-if-env-changed=LND_REPO_DIR");
     let dir = match std::env::var_os("LND_REPO_DIR") {
