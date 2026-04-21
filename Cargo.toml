@@ -1,14 +1,26 @@
 [package]
 name = "lnd_grpc_rust"
-version = "2.14.0"
-authors = ["Martin Habovstiak <martin.habovstiak@gmail.com>", "Jonathan Zernik <yzernik@gmail.com>", "Nitesh Balusu <niteshbalusu@icloud.com>"]
+version = "2.14.1"
+authors = [
+  "Martin Habovstiak <martin.habovstiak@gmail.com>",
+  "Jonathan Zernik <yzernik@gmail.com>",
+  "Nitesh Balusu <niteshbalusu@icloud.com>",
+]
 edition = "2021"
 description = "An async library implementing LND RPC via tonic_openssl and prost"
 homepage = "https://github.com/niteshbalusu11/lnd-grpc-rust"
 repository = "https://github.com/niteshbalusu11/lnd-grpc-rust"
 readme = "README.md"
 keywords = ["LND", "rpc", "grpc", "tonic", "async"]
-categories = ["api-bindings", "asynchronous", "cryptography::cryptocurrencies", "network-programming"]
+categories = [
+  "api-bindings",
+  "asynchronous",
+  "cryptography::cryptocurrencies",
+  "network-programming",
+  "bitcoin",
+  "lightning-network",
+  "lnd",
+]
 license = "MIT"
 
 [lib]
