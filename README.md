@@ -15,6 +15,23 @@ This can be used to test new features in non-released `lnd`.
 cargo add lnd_grpc_rust
 ```
 
+This crate uses OpenSSL through `tonic_openssl`. By default it links against a
+system OpenSSL installation. On Windows, or in CI environments where OpenSSL is
+not installed or not discoverable, enable the vendored OpenSSL feature so Cargo
+builds OpenSSL from source:
+
+```
+cargo add lnd_grpc_rust --features vendored-openssl
+```
+
+Or add it manually:
+
+```toml
+lnd_grpc_rust = { version = "2.14", features = ["vendored-openssl"] }
+```
+
+The vendored feature makes setup more portable, but it increases build time.
+
 ## Usage
 
 There's no setup needed beyond adding the crate to your `Cargo.toml`.
