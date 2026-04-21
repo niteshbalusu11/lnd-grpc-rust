@@ -14,9 +14,7 @@ readme = "README.md"
 keywords = ["LND", "rpc", "grpc", "tonic", "async"]
 categories = [
   "api-bindings",
-  "asynchronous",
   "cryptography::cryptocurrencies",
-  "network-programming",
   "bitcoin",
   "lightning-network",
   "lnd",
