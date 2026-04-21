@@ -14,6 +14,10 @@ license = "MIT"
 [lib]
 doctest = false
 
+[features]
+default = []
+vendored-openssl = ["openssl/vendored"]
+
 [dependencies]
 tonic = "0.14"
 tonic-prost = "0.14"
