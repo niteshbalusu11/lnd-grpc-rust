@@ -14,10 +14,9 @@ readme = "README.md"
 keywords = ["LND", "rpc", "grpc", "tonic", "async"]
 categories = [
   "api-bindings",
+  "asynchronous",
   "cryptography::cryptocurrencies",
-  "bitcoin",
-  "lightning-network",
-  "lnd",
+  "network-programming",
 ]
 license = "MIT"
 
