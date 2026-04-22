@@ -80,6 +80,43 @@ fn buffer_as_hex(bytes: Vec<u8>) -> String {
 }
 ```
 
+### Connecting to multiple nodes
+
+Use `connect_nodes` when you want to manage several LND connections at once.
+Each node gets an alias, and the returned registry can look clients up by that
+alias.
+
+```rust
+let nodes = vec![
+    lnd_grpc_rust::LndNodeConfig::new(
+        "alice",
+        alice_cert,
+        alice_macaroon,
+        "localhost:10001",
+    ),
+    lnd_grpc_rust::LndNodeConfig::new(
+        "bob",
+        bob_cert,
+        bob_macaroon,
+        "localhost:10002",
+    ),
+];
+
+let mut clients = lnd_grpc_rust::connect_nodes(nodes)
+    .await
+    .expect("failed to connect nodes");
+
+let alice_info = clients
+    .get_mut("alice")
+    .expect("missing alice node")
+    .lightning()
+    .get_info(lnd_grpc_rust::lnrpc::GetInfoRequest {})
+    .await
+    .expect("failed to get alice info");
+
+println!("{:#?}", alice_info);
+```
+
 ## License
 
 MIT

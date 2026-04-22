@@ -8,7 +8,12 @@ use openssl::{
     x509::X509,
 };
 pub use prost;
-use std::{error::Error, task::Poll};
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+    fmt,
+    task::Poll,
+};
 use tonic_openssl::ALPN_H2_WIRE;
 use tower::Service;
 
@@ -215,6 +220,102 @@ impl LndClient {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct LndNodeConfig {
+    pub alias: String,
+    pub cert: String,
+    pub macaroon: String,
+    pub socket: String,
+}
+
+impl LndNodeConfig {
+    pub fn new(
+        alias: impl Into<String>,
+        cert: impl Into<String>,
+        macaroon: impl Into<String>,
+        socket: impl Into<String>,
+    ) -> Self {
+        Self {
+            alias: alias.into(),
+            cert: cert.into(),
+            macaroon: macaroon.into(),
+            socket: socket.into(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct LndNodeClients {
+    nodes: HashMap<String, LndClient>,
+}
+
+impl LndNodeClients {
+    pub fn get(&self, alias: &str) -> Option<&LndClient> {
+        self.nodes.get(alias)
+    }
+
+    pub fn get_mut(&mut self, alias: &str) -> Option<&mut LndClient> {
+        self.nodes.get_mut(alias)
+    }
+
+    pub fn get_cloned(&self, alias: &str) -> Option<LndClient> {
+        self.nodes.get(alias).cloned()
+    }
+
+    pub fn contains(&self, alias: &str) -> bool {
+        self.nodes.contains_key(alias)
+    }
+
+    pub fn aliases(&self) -> impl Iterator<Item = &str> {
+        self.nodes.keys().map(String::as_str)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&str, &LndClient)> {
+        self.nodes
+            .iter()
+            .map(|(alias, client)| (alias.as_str(), client))
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = (&str, &mut LndClient)> {
+        self.nodes
+            .iter_mut()
+            .map(|(alias, client)| (alias.as_str(), client))
+    }
+
+    pub fn len(&self) -> usize {
+        self.nodes.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+    }
+
+    pub fn into_inner(self) -> HashMap<String, LndClient> {
+        self.nodes
+    }
+}
+
+#[derive(Debug)]
+pub enum LndConnectError {
+    EmptyAlias,
+    DuplicateAlias(String),
+    NodeConnect { alias: String, message: String },
+}
+
+impl fmt::Display for LndConnectError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyAlias => write!(f, "node alias cannot be empty"),
+            Self::DuplicateAlias(alias) => write!(f, "duplicate node alias: {alias}"),
+            Self::NodeConnect { alias, message } => {
+                write!(f, "failed to connect to node '{alias}': {message}")
+            }
+        }
+    }
+}
+
+impl Error for LndConnectError {}
+
 /// Supplies requests with macaroon
 #[derive(Clone)]
 pub struct MacaroonInterceptor {
@@ -240,20 +341,15 @@ async fn get_channel(
     socket: String,
 ) -> Result<MyChannel, Box<dyn std::error::Error>> {
     let lnd_address = format!("https://{}", socket).to_string();
-    let pem = hex::decode(cert).expect("FailedToDecodeTlsCert");
-    let uri = lnd_address.parse::<Uri>().unwrap();
+    let pem = hex::decode(cert)?;
+    let uri = lnd_address.parse::<Uri>()?;
     let channel = MyChannel::new(Some(pem), uri).await?;
     Ok(channel)
 }
 
-pub async fn connect(
-    cert: String,
-    macaroon: String,
-    socket: String,
-) -> Result<LndClient, Box<dyn std::error::Error>> {
-    let channel = get_channel(cert, socket).await?;
+fn build_lnd_client(channel: MyChannel, macaroon: String) -> LndClient {
     let interceptor = MacaroonInterceptor { macaroon };
-    let client = LndClient {
+    LndClient {
         autopilot: crate::autopilotrpc::autopilot_client::AutopilotClient::with_interceptor(
             channel.clone(),
             interceptor.clone(),
@@ -315,8 +411,49 @@ pub async fn connect(
             channel.clone(),
             interceptor.clone(),
         ),
-    };
-    Ok(client)
+    }
+}
+
+pub async fn connect(
+    cert: String,
+    macaroon: String,
+    socket: String,
+) -> Result<LndClient, Box<dyn std::error::Error>> {
+    let channel = get_channel(cert, socket).await?;
+    Ok(build_lnd_client(channel, macaroon))
+}
+
+pub async fn connect_nodes(
+    nodes: impl IntoIterator<Item = LndNodeConfig>,
+) -> Result<LndNodeClients, LndConnectError> {
+    let mut configs = Vec::new();
+    let mut aliases = HashSet::new();
+
+    for config in nodes {
+        if config.alias.is_empty() {
+            return Err(LndConnectError::EmptyAlias);
+        }
+
+        if !aliases.insert(config.alias.clone()) {
+            return Err(LndConnectError::DuplicateAlias(config.alias));
+        }
+
+        configs.push(config);
+    }
+
+    let mut clients = HashMap::with_capacity(configs.len());
+    for config in configs {
+        let alias = config.alias;
+        let client = connect(config.cert, config.macaroon, config.socket)
+            .await
+            .map_err(|source| LndConnectError::NodeConnect {
+                alias: alias.clone(),
+                message: source.to_string(),
+            })?;
+        clients.insert(alias, client);
+    }
+
+    Ok(LndNodeClients { nodes: clients })
 }
 
 #[derive(Clone)]
