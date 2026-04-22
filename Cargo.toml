@@ -1,6 +1,6 @@
 [package]
 name = "lnd_grpc_rust"
-version = "2.14.2"
+version = "2.15.0"
 authors = [
   "Martin Habovstiak <martin.habovstiak@gmail.com>",
   "Jonathan Zernik <yzernik@gmail.com>",
