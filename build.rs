@@ -16,6 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let protos = vec![
         "autopilotrpc/autopilot.proto",
+        "chainrpc/chainkit.proto",
         "chainrpc/chainnotifier.proto",
         "devrpc/dev.proto",
         "invoicesrpc/invoices.proto",
